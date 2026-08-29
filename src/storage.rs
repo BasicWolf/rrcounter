@@ -1,14 +1,14 @@
 use rusqlite::Connection;
 
-pub struct Database {
+pub struct Storage {
     connection: Connection,
 }
 
-impl Database {
-    pub fn new(db_path: &str) -> Database {
+impl Storage {
+    pub fn new(db_path: &str) -> Storage {
         let connection = Connection::open(&db_path).expect("Cannot open database file");
 
-        let db = Database {
+        let db = Storage {
             connection: connection,
         };
         db.init();

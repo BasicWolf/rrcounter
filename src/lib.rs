@@ -1,5 +1,5 @@
 pub mod config;
-mod database;
+mod storage;
 
 use std::sync::{
     Arc,
@@ -15,8 +15,8 @@ use axum::{
 };
 
 pub use config::Config;
-use database::Database;
 use serde::{Deserialize, Serialize};
+use storage::Storage;
 
 // Shared app state: the lively counter plus the SQLite path (sendable clone).
 
@@ -41,7 +41,7 @@ pub struct VisitsResponse {
 }
 
 pub async fn build_app(config: &Config) -> Router {
-    let db = Database::new(&config.db_path);
+    let db = Storage::new(&config.db_path);
 
     let initial_counter_value = db.get_initial_value();
     let state = AppState {
@@ -78,7 +78,7 @@ async fn flusher(state: AppState, interval: Duration) {
 
         let counter = state.counter.load(Ordering::Relaxed);
 
-        match Database::new(&state.db_path).persist_counter(counter) {
+        match Storage::new(&state.db_path).persist_counter(counter) {
             Ok(()) => {
                 state.flushed_counter.swap(counter, Ordering::Relaxed);
             }
