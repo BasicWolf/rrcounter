@@ -1,10 +1,11 @@
-use rrcounter::build_app;
+use rrcounter::{Config, build_app};
 
 #[tokio::main]
 async fn main() {
-    let router = build_app().await;
+    let config = Config::default();
+    let router = build_app(&config).await;
 
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
+    let listener = tokio::net::TcpListener::bind(format!("127.0.0.1:{}", &config.server_port))
         .await
         .unwrap();
 

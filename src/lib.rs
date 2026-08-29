@@ -1,3 +1,4 @@
+pub mod config;
 mod database;
 
 use std::sync::{
@@ -13,6 +14,7 @@ use axum::{
     routing::{get, post},
 };
 
+pub use config::Config;
 use database::Database;
 use serde::{Deserialize, Serialize};
 
@@ -38,15 +40,14 @@ pub struct VisitsResponse {
     pub visits: i64,
 }
 
-pub async fn build_app() -> Router {
-    let db_path = "visits.db".to_string();
-    let db = Database::new(&db_path);
+pub async fn build_app(config: &Config) -> Router {
+    let db = Database::new(&config.db_path);
 
     let initial_counter_value = db.get_initial_value();
     let state = AppState {
         counter: Arc::new(AtomicI64::new(initial_counter_value)),
         flushed_counter: Arc::new(AtomicI64::new(initial_counter_value)),
-        db_path: Arc::new(db_path),
+        db_path: Arc::new(config.db_path.clone()),
     };
 
     // Spawn the periodic flusher.
