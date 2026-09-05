@@ -1,5 +1,7 @@
 pub mod config;
-mod storage;
+pub mod di_container;
+mod local_database;
+pub mod storage;
 
 use std::sync::{
     Arc,
@@ -15,6 +17,8 @@ use axum::{
 };
 
 pub use config::Config;
+use di_container::DIContainer;
+use local_database::LocalDatabase;
 use serde::{Deserialize, Serialize};
 use storage::Storage;
 
@@ -41,9 +45,11 @@ pub struct VisitsResponse {
 }
 
 pub async fn build_app(config: &Config) -> Router {
-    let db = Storage::new(&config.db_path);
+    let container = DIContainer {
+        storage: Box::new(LocalDatabase::new(&config.db_path)),
+    };
 
-    let initial_counter_value = db.get_initial_value();
+    let initial_counter_value = container.storage.get_initial_value();
     let state = AppState {
         counter: Arc::new(AtomicI64::new(initial_counter_value)),
         flushed_counter: Arc::new(AtomicI64::new(initial_counter_value)),
@@ -78,7 +84,7 @@ async fn flusher(state: AppState, interval: Duration) {
 
         let counter = state.counter.load(Ordering::Relaxed);
 
-        match Storage::new(&state.db_path).persist_counter(counter) {
+        match LocalDatabase::new(&state.db_path).persist_counter(counter) {
             Ok(()) => {
                 state.flushed_counter.swap(counter, Ordering::Relaxed);
             }
