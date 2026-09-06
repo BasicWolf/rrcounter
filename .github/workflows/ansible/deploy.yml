@@ -1,6 +1,5 @@
----
 - name: Deploy rrcounter
-  hosts: rrcounter
+  hosts: all
   become: true
 
   vars:
