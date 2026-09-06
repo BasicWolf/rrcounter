@@ -1,0 +1,109 @@
+---
+- name: Deploy rrcounter
+  hosts: rrcounter
+  become: true
+
+  vars:
+    service_name: rrcounter
+    service_user: srvc-rrcounter
+    install_dir: /opt/rrcounter
+    binary_dir: "{{ install_dir }}/bin"
+    binary_path: "{{ binary_dir }}/rrcounter"
+    artifact_path: "{{ playbook_dir }}/../../../rrcounter"
+    database_path: "/var/lib/rrcounter/visits.db"
+    binary_args: "--db-path {{ database_path }}"
+
+  tasks:
+    - name: Ensure service user exists
+      ansible.builtin.user:
+        name: "{{ service_user }}"
+        system: true
+        create_home: false
+
+    - name: Ensure application directory exists
+      ansible.builtin.file:
+        path: "{{ install_dir }}"
+        state: directory
+        owner: "{{ service_user }}"
+        group: "{{ service_user }}"
+        mode: "0755"
+
+    - name: Ensure binary directory exists
+      ansible.builtin.file:
+        path: "{{ binary_dir }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Ensure database directory exists
+      ansible.builtin.file:
+        path: "/var/lib/rrcounter"
+        state: directory
+        owner: "{{ service_user }}"
+        group: "{{ service_user }}"
+        mode: "0755"
+
+    - name: Install application binary
+      ansible.builtin.copy:
+        src: "{{ artifact_path }}"
+        dest: "{{ binary_path }}"
+        owner: root
+        group: root
+        mode: "0755"
+      notify: Restart rrcounter
+
+    - name: Ensure database is owned by the service user
+      ansible.builtin.file:
+        path: "{{ database_path }}"
+        state: touch
+        owner: "{{ service_user }}"
+        group: "{{ service_user }}"
+        mode: "0644"
+        modification_time: preserve
+        access_time: preserve
+
+    - name: Install systemd unit
+      ansible.builtin.copy:
+        dest: "/etc/systemd/system/{{ service_name }}.service"
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          [Unit]
+          Description=RRCounter visitor counter
+          Wants=network-online.target
+          After=network-online.target
+
+          [Service]
+          Type=simple
+          User={{ servce_user }}
+          Group={{ service_user }}
+          WorkingDirectory={{ install_dir }}
+          ExecStart={{ binary_path }} {{ binary_args }}
+          Restart=on-failure
+          RestartSec=5
+          NoNewPrivileges=true
+          PrivateTmp=true
+
+          [Install]
+          WantedBy=multi-user.target
+      notify:
+        - Reload systemd
+        - Restart rrcounter
+
+    - name: Ensure rrcounter is enabled and running
+      ansible.builtin.systemd:
+        name: "{{ service_name }}"
+        enabled: true
+        state: started
+
+  handlers:
+    - name: Reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: Restart rrcounter
+      ansible.builtin.systemd:
+        name: "{{ service_name }}"
+        state: restarted

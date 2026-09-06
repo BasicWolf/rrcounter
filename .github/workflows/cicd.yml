@@ -1,0 +1,83 @@
+name: Rust
+
+on:
+  push:
+    branches: [ "master" ]
+  # to enable manual workflow dispatch
+  workflow_dispatch: {}
+
+# ensure only a single workflow run at a time
+concurrency:
+   group: ${{ github.workflow }}
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Cache Cargo dependencies and build artifacts
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Build
+      run: cargo build
+
+    - name: Run tests
+      run: cargo test
+
+    - name: Upload release binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: rrcounter
+        path: target/release/rrcounter
+        if-no-files-found: error
+
+  deploy:
+    name: Deploy to server
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      ANSIBLE_INVENTORY: "${{ secrets.DEPLOY_HOST }},"
+      ANSIBLE_REMOTE_PORT: "${{ secrets.DEPLOY_SSH_PORT }}"
+      ANSIBLE_REMOTE_USER: deploy
+      ANSIBLE_PRIVATE_KEY_FILE: ${{ '~/.ssh/id_ecdsa_deploy' }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Download release binary
+        uses: actions/download-artifact@v4
+        with:
+          name: rrcounter
+          path: .
+
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          name: id_ecdsa_deploy
+          known_hosts: ${{ secrets.DEPLOY_SSH_KNOWN_HOSTS }}
+          if_key_exists: fail
+
+      - name: "Deploy Dry Run"
+        run: make deploy
+        env:
+          DEPLOY_DRY_RUN: 1
+
+      - name: "Deploy"
+        run: make deploy
