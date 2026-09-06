@@ -51,7 +51,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     env:
-      ANSIBLE_INVENTORY: "${{ secrets.DEPLOY_HOST }},"
+      DEPLOY_HOST: "${{ secrets.DEPLOY_HOST }},"
       ANSIBLE_REMOTE_PORT: "${{ secrets.DEPLOY_SSH_PORT }}"
       ANSIBLE_REMOTE_USER: deploy
       ANSIBLE_PRIVATE_KEY_FILE: ${{ '~/.ssh/id_ecdsa_deploy' }}

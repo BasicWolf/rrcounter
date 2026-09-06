@@ -24,7 +24,7 @@ $(RELEASE_BINARY_PATH):
 release: $(RELEASE_BINARY_PATH)
 
 deploy:
-	ansible-playbook -i $(ANSIBLE_INVENTORY) .github/workflows/ansible/deploy.yml $(ANSIBLEOPTS)
+	ansible-playbook -i $(DEPLOY_HOST), .github/workflows/ansible/deploy.yml $(ANSIBLEOPTS)
 
 clean:
 	cargo clean
