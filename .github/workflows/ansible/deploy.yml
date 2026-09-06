@@ -76,7 +76,7 @@
 
           [Service]
           Type=simple
-          User={{ servce_user }}
+          User={{ service_user }}
           Group={{ service_user }}
           WorkingDirectory={{ install_dir }}
           ExecStart={{ binary_path }} {{ binary_args }}
