@@ -96,13 +96,16 @@
         name: "{{ service_name }}"
         enabled: true
         state: started
+      when: not ansible_check_mode
 
   handlers:
     - name: Reload systemd
       ansible.builtin.systemd:
         daemon_reload: true
+      when: not ansible_check_mode
 
     - name: Restart rrcounter
       ansible.builtin.systemd:
         name: "{{ service_name }}"
         state: restarted
+      when: not ansible_check_mode
