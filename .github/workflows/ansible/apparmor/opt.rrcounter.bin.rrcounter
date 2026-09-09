@@ -1,0 +1,36 @@
+#include <tunables/global>
+
+/opt/rrcounter/bin/rrcounter {
+  # Anything not listed in this profile is denied by default.
+  # Standard runtime and name-service access.
+  #include <abstractions/base>
+  #include <abstractions/nameservice>
+
+  # Load and execute the deployed binary, including its read-only executable
+  # mappings required by the dynamic linker.
+  /opt/rrcounter/bin/rrcounter mr,
+
+  # Permit traversal of the application and binary directories without
+  # granting access to unrelated files.
+  /opt/rrcounter/ rix,
+  /opt/rrcounter/bin/ rix,
+
+  # Permit read-only inspection of process cgroup membership. The async
+  # runtime and systemd-managed services may read this metadata to identify
+  # the process resource-control hierarchy; no other /proc process data is
+  # granted by this rule.
+  /proc/*/cgroup r,
+
+  # Permit read-only inspection of cgroup v2 resource limits such as
+  # cpu.max. The runtime may use these values to determine the service's
+  # CPU quota; write access to the cgroup hierarchy remains denied.
+  /sys/fs/cgroup/** r,
+
+  # SQLite needs the sidecar files for journaling and WAL mode.
+  owner /var/lib/rrcounter/visits.db rwk,
+  owner /var/lib/rrcounter/visits.db-* rwk,
+  # SQLite must be able to create, rename, and remove sidecar files here.
+  owner /var/lib/rrcounter/ rw,
+
+  network inet stream,
+}

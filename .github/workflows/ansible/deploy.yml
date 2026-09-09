@@ -10,6 +10,7 @@
     binary_path: "{{ binary_dir }}/rrcounter"
     artifact_path: "{{ playbook_dir }}/../../../rrcounter"
     database_path: "/var/lib/rrcounter/visits.db"
+    apparmor_profile: /etc/apparmor.d/opt.rrcounter.bin.rrcounter
     binary_args: "--db-path {{ database_path }}"
 
   tasks:
@@ -52,6 +53,28 @@
         mode: "0755"
       notify: Restart rrcounter
 
+    - name: Install AppArmor profile
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/apparmor/opt.rrcounter.bin.rrcounter"
+        dest: "{{ apparmor_profile }}"
+        owner: root
+        group: root
+        mode: "0644"
+      notify:
+        - Restart rrcounter
+
+    - name: Load AppArmor profile
+      ansible.builtin.command:
+        cmd: apparmor_parser -r "{{ apparmor_profile }}"
+      changed_when: true
+      when: not ansible_check_mode
+
+    - name: Ensure AppArmor is enabled
+      ansible.builtin.service:
+        name: apparmor
+        enabled: true
+        state: started
+
     - name: Ensure database is owned by the service user
       ansible.builtin.file:
         path: "{{ database_path }}"
@@ -84,6 +107,11 @@
           RestartSec=5
           NoNewPrivileges=true
           PrivateTmp=true
+          RestrictAddressFamilies=AF_INET
+          IPAddressDeny=any
+          IPAddressAllow=127.0.0.1
+          SocketBindAllow=127.0.0.1:3000
+          SocketBindDeny=any
 
           [Install]
           WantedBy=multi-user.target
