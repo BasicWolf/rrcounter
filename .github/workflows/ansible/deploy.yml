@@ -110,8 +110,6 @@
           RestrictAddressFamilies=AF_INET
           IPAddressDeny=any
           IPAddressAllow=127.0.0.1
-          SocketBindAllow=127.0.0.1:3000
-          SocketBindDeny=any
 
           [Install]
           WantedBy=multi-user.target
