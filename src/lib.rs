@@ -13,6 +13,7 @@ use axum::{
     Json, Router,
     extract::State,
     http::StatusCode,
+    response::Html,
     routing::{get, post},
 };
 
@@ -62,6 +63,7 @@ pub async fn build_app(config: &Config) -> Router {
     Router::new()
         .route("/visits", get(get_visits))
         .route("/visit", post(record_visit))
+        .route("/status", get(get_status))
         .with_state(state)
 }
 
@@ -74,6 +76,10 @@ async fn get_visits(State(state): State<AppState>) -> Json<VisitsResponse> {
     Json(VisitsResponse {
         visits: state.counter.load(Ordering::Relaxed),
     })
+}
+
+async fn get_status() -> Html<&'static str> {
+    Html("<h1>RRCounter is up and running!</h1>")
 }
 
 async fn flusher(state: AppState, interval: Duration) {

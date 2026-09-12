@@ -1,4 +1,10 @@
-use axum::{Router, body::Body, http::Request};
+use std::error::Error;
+
+use axum::{
+    Router,
+    body::{Body, to_bytes},
+    http::Request,
+};
 use rrcounter::{Config, VisitsResponse, build_app};
 use tempfile::Builder;
 use tower::ServiceExt; // for Router.oneshot
@@ -33,6 +39,24 @@ impl SUT {
         };
 
         build_app(&config).await
+    }
+
+    pub async fn get_status_page(&self) -> Result<String, Box<dyn Error>> {
+        let resp = self
+            .app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method("GET")
+                    .uri("/status")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await?;
+
+        let bytes = to_bytes(resp.into_body(), usize::MAX).await?;
+        let body_as_string = String::from_utf8(bytes.to_vec())?;
+        Ok(body_as_string)
     }
 
     pub async fn post_visit(&self) {
