@@ -32,7 +32,6 @@ use storage::Storage;
 struct AppState {
     // SQLite3 supports Signed 8-byte integers, hence I64
     counter: Arc<AtomicI64>,
-    flushed_counter: Arc<AtomicI64>,
 
     // We pass DB Path instead of structure with a connection
     // since ruslite Connections are not thread-safe
@@ -53,7 +52,6 @@ pub async fn build_app(config: &Config) -> Router {
     let initial_counter_value = container.storage.get_initial_value();
     let state = AppState {
         counter: Arc::new(AtomicI64::new(initial_counter_value)),
-        flushed_counter: Arc::new(AtomicI64::new(initial_counter_value)),
         db_path: Arc::new(config.db_path.clone()),
     };
 
@@ -91,12 +89,10 @@ async fn flusher(state: AppState, interval: Duration) {
         let counter = state.counter.load(Ordering::Relaxed);
 
         match LocalDatabase::new(&state.db_path).persist_counter(counter) {
-            Ok(()) => {
-                state.flushed_counter.swap(counter, Ordering::Relaxed);
-            }
             Err(e) => {
                 eprintln!("flush failed: {e}");
             }
+            Ok(()) => {}
         }
     }
 }
