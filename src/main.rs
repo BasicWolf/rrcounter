@@ -33,7 +33,7 @@ impl CliArgs {
     pub fn to_config(&self) -> Config {
         Config {
             db_path: self.db_path.to_str().unwrap().to_owned(),
-            server_bind_ip: self.server_bind_ip.to_string(),
+            server_bind_ip: self.server_bind_ip,
             server_port: self.server_port,
         }
     }

@@ -1,4 +1,4 @@
-use std::error::Error;
+use std::{error::Error, net::Ipv4Addr, str::FromStr};
 
 use axum::{
     Router,
@@ -36,7 +36,7 @@ impl SUT {
         let config = Config {
             db_path: temp_db_path,
             server_port: 3000,
-            server_bind_ip: "127.0.0.1".to_string(),
+            server_bind_ip: Ipv4Addr::from_str("127.0.0.1").unwrap(),
         };
 
         build_app(&config).await
