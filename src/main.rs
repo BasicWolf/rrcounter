@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{net::Ipv4Addr, path::PathBuf, str::FromStr};
 
 use clap::Parser;
 use rrcounter::{Config, build_app, config};
@@ -24,28 +24,37 @@ struct CliArgs {
 
     #[arg(long, default_value_t = config::DEFAULT_SERVER_PORT)]
     server_port: u16,
+
+    #[arg(long, default_value_t = Ipv4Addr::from_str(config::DEFAULT_SERVER_BIND_IP).unwrap())]
+    server_bind_ip: Ipv4Addr,
 }
 
 impl CliArgs {
     pub fn to_config(&self) -> Config {
         Config {
             db_path: self.db_path.to_str().unwrap().to_owned(),
+            server_bind_ip: self.server_bind_ip.to_string(),
             server_port: self.server_port,
         }
     }
 }
 
 #[test]
-fn test_cli_all_args() {
+fn test_cli_all_args() -> Result<(), Box<dyn std::error::Error>> {
     let args = CliArgs::parse_from(vec![
         "ignore__binary_name",
         "--db-path",
         "/path/to/my.db",
+        "--server-bind-ip",
+        "192.168.1.1",
         "--server-port",
         "8080",
     ]);
     assert_eq!(PathBuf::from("/path/to/my.db"), PathBuf::from(args.db_path));
     assert_eq!(8080, args.server_port);
+    assert_eq!(Ipv4Addr::from_str("192.168.1.1")?, args.server_bind_ip);
+
+    Ok(())
 }
 
 #[test]

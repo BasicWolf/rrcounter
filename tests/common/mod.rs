@@ -36,6 +36,7 @@ impl SUT {
         let config = Config {
             db_path: temp_db_path,
             server_port: 3000,
+            server_bind_ip: "127.0.0.1".to_string(),
         };
 
         build_app(&config).await
