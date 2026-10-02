@@ -10,6 +10,8 @@ tokio = { version = "1", features = ["full"] }
 rusqlite = { version = "0.31", features = ["bundled"] }
 serde = { version = "1", features = ["derive"] }
 clap = { version = "4.6.6", features = ["derive"] }
+simple_logger = { version = "5.2.0", features = ["stderr"] }
+log = "0.4.34"
 
 
 [dev-dependencies]

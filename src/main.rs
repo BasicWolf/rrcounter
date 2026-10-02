@@ -2,20 +2,21 @@ use std::{net::Ipv4Addr, path::PathBuf, str::FromStr};
 
 use clap::Parser;
 use rrcounter::{Config, build_app, config};
+use simple_logger::SimpleLogger;
 
 #[tokio::main]
 async fn main() {
+    SimpleLogger::new().init().unwrap();
+
     let args = CliArgs::parse();
     let config = args.to_config();
 
     let router = build_app(&config).await;
 
-    let listener = tokio::net::TcpListener::bind(format!(
-        "{}:{}",
-        &config.server_bind_ip, &config.server_port
-    ))
-    .await
-    .unwrap();
+    let bound_ip_port = format!("{}:{}", &config.server_bind_ip, &config.server_port);
+    log::info!("Listening on {}", bound_ip_port);
+
+    let listener = tokio::net::TcpListener::bind(bound_ip_port).await.unwrap();
 
     axum::serve(listener, router).await.unwrap();
 }
