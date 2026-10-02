@@ -21,6 +21,7 @@ impl Config {
 }
 
 /* ==== UNIT TESTS ==== */
+#[cfg(test)]
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 
 #[test]

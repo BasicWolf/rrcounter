@@ -10,9 +10,12 @@ async fn main() {
 
     let router = build_app(&config).await;
 
-    let listener = tokio::net::TcpListener::bind(format!("127.0.0.1:{}", &config.server_port))
-        .await
-        .unwrap();
+    let listener = tokio::net::TcpListener::bind(format!(
+        "{}:{}",
+        &config.server_bind_ip, &config.server_port
+    ))
+    .await
+    .unwrap();
 
     axum::serve(listener, router).await.unwrap();
 }
