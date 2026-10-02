@@ -11,7 +11,8 @@
     artifact_path: "{{ playbook_dir }}/../../../rrcounter"
     database_path: "/var/lib/rrcounter/visits.db"
     apparmor_profile: /etc/apparmor.d/opt.rrcounter.bin.rrcounter
-    binary_args: "--db-path {{ database_path }}"
+    server_bind_ip: "172.22.0.1"
+    binary_args: "--db-path {{ database_path }} --server-bind-ip {{ server_bind_ip }}"
 
   tasks:
     - name: Ensure service user exists
@@ -109,7 +110,7 @@
           PrivateTmp=true
           RestrictAddressFamilies=AF_INET
           IPAddressDeny=any
-          IPAddressAllow=127.0.0.1
+          IPAddressAllow=172.22.0.0/16
 
           [Install]
           WantedBy=multi-user.target
